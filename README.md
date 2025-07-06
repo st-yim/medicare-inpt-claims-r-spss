@@ -1,4 +1,4 @@
-# cms-de10-inpatient-r-spss
+# CMS-DE10-Inpatient-R-SPSS
 
 Clean and prepare CMS DE-SynPUF inpatient claims (Sample 2, 2008–2010) in R for downstream analysis in SPSS.
 

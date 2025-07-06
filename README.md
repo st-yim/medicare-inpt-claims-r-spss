@@ -2,6 +2,8 @@
 
 Clean and prepare CMS DE-SynPUF inpatient claims (Sample 2, 2008–2010) in R for downstream analysis in SPSS.
 
+> **Note**: This project uses *synthetic Medicare data* (DE-SynPUF Sample 2); it contains no real patient records.
+
 ---
 
 ## 📦 Overview

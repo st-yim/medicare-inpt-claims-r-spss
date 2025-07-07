@@ -11,6 +11,8 @@ library(tidyverse)
 library(janitor)
 library(lubridate)
 library(glue)
+library(labelled)
+
 ```
 
 ```{r}
@@ -114,6 +116,22 @@ inpt_claims <- inpt_claims %>%
       TRUE                                          ~ NA_integer_                           # interim claim, leave blank
     )
   )
+
+```
+
+```{r}
+
+var_label(inpt_claims$los)    <- "Length of stay (days)"
+
+var_label(inpt_claims$admit_date) <- "Admission date"
+var_label(inpt_claims$discharge_date) <- "Discharge date"
+
+var_label(inpt_claims$from_date) <- "Claim from date"
+var_label(inpt_claims$thru_date) <- "Claim thru date"
+
+var_label(inpt_claims$drg_code) <- "Diagnosis-related group (DRG)"
+
+var_label(inpt_claims$is_final) <- "Final claim indicator"
 
 ```
 

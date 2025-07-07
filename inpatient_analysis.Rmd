@@ -121,16 +121,22 @@ inpt_claims <- inpt_claims %>%
 
 ```{r}
 
+# ── 6. Label key variables for SPSS ────────────────────────────
+
 var_label(inpt_claims$los)    <- "Length of stay (days)"
 
+# Stay-level dates
 var_label(inpt_claims$admit_date) <- "Admission date"
 var_label(inpt_claims$discharge_date) <- "Discharge date"
 
+# Statement-covers period
 var_label(inpt_claims$from_date) <- "Claim from date"
 var_label(inpt_claims$thru_date) <- "Claim thru date"
 
+# Other claim descriptors
 var_label(inpt_claims$drg_code) <- "Diagnosis-related group (DRG)"
 
+# Final-bill flag
 var_label(inpt_claims$is_final) <- "Final claim indicator"
 
 ```

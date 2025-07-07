@@ -3,7 +3,10 @@ title: "inpatient_analysis"
 output: html_document
 ---
 
-```{r}
+```{r} 
+
+# ── 1. Read raw data ─────────────────────────────────────────────────────────
+
 library(tidyverse)
 library(janitor)
 library(lubridate)
@@ -11,12 +14,32 @@ library(glue)
 ```
 
 ```{r}
-inpt_claims_raw <- read_csv("Inpatient_Claims.csv")
+
+# ── 2. Drop columns that are 100 % NA (log them) ────────────────────────────
+
+inpt_claims_raw <- read_csv("data/Inpatient_Claims.csv")
+
+before_cols <- names(inpt_claims_raw)
 
 inpt_claims <- inpt_claims_raw %>%
   remove_constant(na.rm = FALSE)
 
-glimpse(inpt_claims_raw)
+after_cols <- names(inpt_claims)
+
+removed <- setdiff(before_cols, after_cols)
+if (length(removed) > 0) {
+  message(glue(
+    "Removed columns: {paste(removed, collapse = ', ')}"
+    ))
+} else {
+  message("No constant columns removed.")
+}
+
+```
+ 
+```{r}
+
+# ── 3. Standardize names & basic types ──────────────────────────────────────
 
 inpt_claims <- inpt_claims %>%
   clean_names() %>%
@@ -28,18 +51,29 @@ inpt_claims <- inpt_claims %>%
     drg_code       = factor(clm_drg_cd),
   )
 
+```
+
+```{r}
+
+# ── 4. Identify a bill-type column, if present ──────────────────────────────
+
 preferred_bill_vars <- c("bill_type", "clm_type_cd", "tob")
 
 bill_type_vars <- preferred_bill_vars[preferred_bill_vars %in% names(inpt_claims)]
 
 
 if (length(bill_type_vars) == 0) {
+  
+  # No bill type → infer final claims by presence of discharge date
   inpt_claims <- inpt_claims %>%
     mutate(is_final = !is.na(discharge_date))
   
 } else {
+  
+  # Use the first preferred column as the authoritative source
   primary_bt <- bill_type_vars[1]
   
+  # If there’s a second column, check that it matches (after padding)
   if (length(bill_type_vars) == 2) {
     secondary_bt <- bill_type_vars[2]
     
@@ -57,6 +91,7 @@ if (length(bill_type_vars) == 0) {
     )
   }
   
+  # Create final-claim flag from the primary column
   inpt_claims <- inpt_claims %>%
     mutate(
       bill_type_chr = str_pad(as.character(!!sym(primary_bt)), 3, pad = "0"),
@@ -64,6 +99,12 @@ if (length(bill_type_vars) == 0) {
       is_final      = tob_last %in% c("1", "4", "7")
     )
 }
+
+```
+
+```{r}
+
+# ── 5. Calculate Length-of-Stay (LOS) ───────────────────────────────────────
 
 inpt_claims <- inpt_claims %>%
   mutate(

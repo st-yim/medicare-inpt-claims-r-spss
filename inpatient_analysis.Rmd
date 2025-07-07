@@ -12,6 +12,7 @@ library(janitor)
 library(lubridate)
 library(glue)
 library(labelled)
+library(haven)
 
 ```
 
@@ -19,7 +20,7 @@ library(labelled)
 
 # ── 2. Drop columns that are 100 % NA (log them) ────────────────────────────
 
-inpt_claims_raw <- read_csv("data/Inpatient_Claims.csv")
+inpt_claims_raw <- read_csv("data/inpatient_claims_raw.csv")
 
 before_cols <- names(inpt_claims_raw)
 
@@ -141,3 +142,11 @@ var_label(inpt_claims$is_final) <- "Final claim indicator"
 
 ```
 
+```{r}
+
+# ── 7. Save cleaned data sets ────────────────────────────────────────────────
+
+write_csv(inpt_claims, "data/inpatient_claims_clean.csv")
+write_sav(inpt_claims, "data/inpatient_claims_clean.sav")
+
+```

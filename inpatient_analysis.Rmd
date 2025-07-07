@@ -1,0 +1,78 @@
+---
+title: "inpatient_analysis"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(glue)
+```
+
+```{r}
+inpt_claims_raw <- read_csv("Inpatient_Claims.csv")
+
+inpt_claims <- inpt_claims_raw %>%
+  remove_constant(na.rm = FALSE)
+
+glimpse(inpt_claims_raw)
+
+inpt_claims <- inpt_claims %>%
+  clean_names() %>%
+  mutate(
+    admit_date     = ymd(as.character(clm_admsn_dt)),
+    from_date      = ymd(as.character(clm_from_dt)),
+    thru_date      = ymd(as.character(clm_thru_dt)),
+    discharge_date = ymd(as.character(nch_bene_dschrg_dt)),
+    drg_code       = factor(clm_drg_cd),
+  )
+
+preferred_bill_vars <- c("bill_type", "clm_type_cd", "tob")
+
+bill_type_vars <- preferred_bill_vars[preferred_bill_vars %in% names(inpt_claims)]
+
+
+if (length(bill_type_vars) == 0) {
+  inpt_claims <- inpt_claims %>%
+    mutate(is_final = !is.na(discharge_date))
+  
+} else {
+  primary_bt <- bill_type_vars[1]
+  
+  if (length(bill_type_vars) == 2) {
+    secondary_bt <- bill_type_vars[2]
+    
+    agree <- all(
+      str_pad(inpt_claims[[primary_bt]], 3, pad = "0") ==
+        str_pad(inpt_claims[[secondary_bt]], 3, pad = "0"),
+      na.rm = TRUE
+    )
+    
+    if (!agree) 
+      warning(glue(
+        "Bill-type columns '{primary_bt}' and '{secondary_bt}' ",
+        "do not match for at least one record...please investigate."
+      )
+    )
+  }
+  
+  inpt_claims <- inpt_claims %>%
+    mutate(
+      bill_type_chr = str_pad(as.character(!!sym(primary_bt)), 3, pad = "0"),
+      tob_last      = substr(bill_type_chr, 3, 3),
+      is_final      = tob_last %in% c("1", "4", "7")
+    )
+}
+
+inpt_claims <- inpt_claims %>%
+  mutate(
+    los = case_when(
+      is_final & !is.na(discharge_date)             ~ as.integer(discharge_date - admit_date),
+      is_final &  is.na(discharge_date)             ~ as.integer(thru_date - admit_date),  # final but discharge missing
+      TRUE                                          ~ NA_integer_                           # interim claim, leave blank
+    )
+  )
+
+```
+

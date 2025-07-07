@@ -1,4 +1,8 @@
 # Ignore Quarto/R Markdown output for language stats
 
+
+*.Rmd linguist-language=R
+*.Rmd linguist-detectable
+
 *.html        linguist-generated=true
 *_files/**    linguist-generated=true

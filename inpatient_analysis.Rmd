@@ -20,7 +20,11 @@ library(haven)
 
 # ── 2. Drop columns that are 100 % NA (log them) ────────────────────────────
 
-inpt_claims_raw <- read_csv("data/inpatient_claims_raw.csv")
+inpt_claims_raw <- read_csv("data/inpatient_claims_raw.csv",
+                            col_types = cols(
+                              DESYNPUF_ID = col_character(),
+                              CLM_ID      = col_character()
+                            ))
 
 before_cols <- names(inpt_claims_raw)
 
@@ -58,7 +62,7 @@ inpt_claims <- inpt_claims %>%
 
 ```{r}
 
-# ── 4. Identify a bill-type column, if present ──────────────────────────────
+# ── 4a. Identify a bill-type column, if present ──────────────────────────────
 
 preferred_bill_vars <- c("bill_type", "clm_type_cd", "tob")
 
@@ -67,10 +71,14 @@ bill_type_vars <- preferred_bill_vars[preferred_bill_vars %in% names(inpt_claims
 
 if (length(bill_type_vars) == 0) {
   
-  # No bill type → infer final claims by presence of discharge date
+  # File has no bill-type field (e.g., DE-SynPUF)
+  # • Treat every claim as a final-action bill (already the CMS default).
+  # • Create a neutral rank of 2 so later arrange()/de-dupe logic works.
   inpt_claims <- inpt_claims %>%
-    mutate(is_final = !is.na(discharge_date))
-  
+    mutate(
+      tob_last = NA_character_,           # placeholder, keeps schema consistent
+      tob_rank = 2L                       # 2 = ordinary final bill
+    )
 } else {
   
   # Use the first preferred column as the authoritative source
@@ -94,12 +102,21 @@ if (length(bill_type_vars) == 0) {
     )
   }
   
-  # Create final-claim flag from the primary column
+  # Convert the selected bill-type field (e.g, BILL_TYPE, CLM_TYPE_CD, TOB)
+  # to a 3-character string, then extract its 3rd digit:
+  #   • bill_type_chr : zero-padded literal (e.g. "114")
+  #   • tob_last      : frequency digit (1 = final, 4 = final-interim, 7 = replacement)
   inpt_claims <- inpt_claims %>%
     mutate(
       bill_type_chr = str_pad(as.character(!!sym(primary_bt)), 3, pad = "0"),
       tob_last      = substr(bill_type_chr, 3, 3),
-      is_final      = tob_last %in% c("1", "4", "7")
+      
+      # Numeric ranking (Lower = better)
+      tob_rank = case_when(
+        tob_last == "7"             ~ 1,  # replacement/adjusted
+        tob_last %in% c("4", "1")   ~ 2,  # final-interim OR admit-thru-discharge final
+        TRUE                        ~ 3   # interim (2/3), void (8), no-pay (0)
+      )
     )
 }
 
@@ -107,14 +124,32 @@ if (length(bill_type_vars) == 0) {
 
 ```{r}
 
+# ── 4b.  De-duplicate on CLM_ID, keeping only the best-ranked version ────────
+#  1. Sort so “best” rows rise to the top of each CLM_ID group:
+#       • lowest tob_rank first  (1 = replacement, 2 = final, 3 = interim/void)
+#       • if ranks tie, pick the row with the latest service span
+#  2. `distinct()` then keeps that first row and drops the rest.
+
+inpt_claims <- inpt_claims %>% 
+  arrange(
+    clm_id,                                                           
+    tob_rank,                                                         
+    desc(pmax(discharge_date, thru_date, na.rm = TRUE))     
+  ) %>% 
+  distinct(clm_id, .keep_all = TRUE)
+
+```
+
+```{r}
+
 # ── 5. Calculate Length-of-Stay (LOS) ───────────────────────────────────────
 
-inpt_claims <- inpt_claims %>%
+inpt_claims <- inpt_claims %>% 
   mutate(
     los = case_when(
-      is_final & !is.na(discharge_date)             ~ as.integer(discharge_date - admit_date),
-      is_final &  is.na(discharge_date)             ~ as.integer(thru_date - admit_date),  # final but discharge missing
-      TRUE                                          ~ NA_integer_                           # interim claim, leave blank
+      tob_rank <= 2 & !is.na(discharge_date) ~ as.integer(discharge_date - admit_date),
+      tob_rank <= 2 &  is.na(discharge_date) ~ as.integer(thru_date      - admit_date),
+      TRUE                                   ~ NA_integer_
     )
   )
 
@@ -122,23 +157,25 @@ inpt_claims <- inpt_claims %>%
 
 ```{r}
 
-# ── 6. Label key variables for SPSS ────────────────────────────
+# ── 6. Label key variables for SPSS / Haven export ──────────────────────────
 
-var_label(inpt_claims$los)    <- "Length of stay (days)"
+# Core stay metrics
+var_label(inpt_claims$los)                         <- "Length of stay (days)"
 
 # Stay-level dates
-var_label(inpt_claims$admit_date) <- "Admission date"
-var_label(inpt_claims$discharge_date) <- "Discharge date"
+var_label(inpt_claims$admit_date)                  <- "Admission date"
+var_label(inpt_claims$discharge_date)              <- "Discharge date"
 
 # Statement-covers period
-var_label(inpt_claims$from_date) <- "Claim from date"
-var_label(inpt_claims$thru_date) <- "Claim thru date"
+var_label(inpt_claims$from_date)                   <- "Claim FROM date (first service on this bill)"
+var_label(inpt_claims$thru_date)                   <- "Claim THRU date (last service on this bill)"
+
+# Type-of-Bill fields (may be NA in DE-SynPUF)
+var_label(inpt_claims$tob_last)                    <- "Bill frequency digit (1 = final, 4 = final-interim, 7 = replacement; NA in SynPUF)"
+var_label(inpt_claims$tob_rank)                    <- "Priority rank for duplicate resolution (1 = replacement, 2 = final, 3 = interim/void)"
 
 # Other claim descriptors
-var_label(inpt_claims$drg_code) <- "Diagnosis-related group (DRG)"
-
-# Final-bill flag
-var_label(inpt_claims$is_final) <- "Final claim indicator"
+var_label(inpt_claims$drg_code)                    <- "Diagnosis-Related Group (DRG)"
 
 ```
 

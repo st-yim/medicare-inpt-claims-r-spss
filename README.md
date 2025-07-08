@@ -99,4 +99,23 @@ The `inpatient_claims.Rmd` script performs the following steps:
 ## 💾 Outputs
 
 - `data/inpatient_claims_clean.csv` — clean, analysis-ready data  
-- `data/inpatient_claims_clean.sav` — SPSS-compatible file with labels  
+- `data/inpatient_claims_clean.sav` — SPSS-compatible file with labels
+
+---
+
+## 📦 R packages used
+
+| Package    | Purpose                                                                 |
+|------------|-------------------------------------------------------------------------|
+| `tidyverse` | Core data wrangling (`read_csv()`, `mutate()`, `arrange()`, etc.)       |
+| `janitor`   | Remove constant columns and clean variable names                        |
+| `lubridate` | Parse and manipulate date fields (e.g., `ymd()`)                        |
+| `glue`      | Construct readable warnings and messages                                |
+| `labelled`  | Add SPSS-style variable labels                                          |
+| `haven`     | Export `.sav` files for SPSS with metadata                              |
+
+To install all required packages:
+
+```r
+install.packages(c("tidyverse", "janitor", "lubridate", "glue", "labelled", "haven"))
+```

@@ -35,3 +35,15 @@ This data is fully synthetic and publicly available, suitable for method develop
 
 ## 🛠️ Project structure
 
+```text
+.
+├── data/                              # All input & output files live here
+│   ├── inpatient_claims_raw.csv                           # raw input
+│   ├── inpatient_claims_clean.csv                         # cleaned output
+│   └── inpatient_claims_clean.sav                         # SPSS output
+│
+├── R/
+│   └── inpatient_claims.Rmd                               # Main processing script
+├── README.Rmd                                             <- This file
+
+```

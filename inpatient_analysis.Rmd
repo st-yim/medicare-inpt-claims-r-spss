@@ -46,7 +46,7 @@ if (length(removed) > 0) {
  
 ```{r}
 
-# ── 3. Standardize names & basic types ──────────────────────────────────────
+# ── 3a. Standardize names & basic types ──────────────────────────────────────
 
 inpt_claims <- inpt_claims %>%
   clean_names() %>%
@@ -56,6 +56,43 @@ inpt_claims <- inpt_claims %>%
     thru_date      = ymd(as.character(clm_thru_dt)),
     discharge_date = ymd(as.character(nch_bene_dschrg_dt)),
     drg_code       = factor(clm_drg_cd),
+  )
+
+```
+
+```{r}
+
+# ── 3b. Validate date ranges (2008–2010) ─────────────────────────────────────
+
+# Define the expected date window
+start_date <- ymd("2008-01-01")
+end_date   <- ymd("2010-12-31")
+
+# Remove claims with required dates missing or outside the valid range
+inpt_claims <- inpt_claims %>%
+  filter(
+    # 1. Admission date: must be present and in range
+    !is.na(admit_date) &
+    admit_date >= start_date & admit_date <= end_date,
+
+    # 2. From date: required for billing span, must be in range
+    !is.na(from_date) &
+    from_date >= start_date & from_date <= end_date,
+
+    # 3. Thru date: required for billing span, must be in range
+    !is.na(thru_date) &
+    thru_date >= start_date & thru_date <= end_date
+  )
+
+# If discharge date exists but is out of bounds, null it out
+inpt_claims <- inpt_claims %>%
+  mutate(
+    discharge_date = if_else(
+      !is.na(discharge_date) &
+        (discharge_date < start_date | discharge_date > end_date),
+      NA_Date_,
+      discharge_date
+    )
   )
 
 ```

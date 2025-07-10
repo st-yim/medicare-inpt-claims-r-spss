@@ -76,8 +76,9 @@ if (length(bill_type_vars) == 0) {
   # • Create a neutral rank of 2 so later arrange()/de-dupe logic works.
   inpt_claims <- inpt_claims %>%
     mutate(
-      tob_last = NA_character_,           # placeholder, keeps schema consistent
-      tob_rank = 2L                       # 2 = ordinary final bill
+      tob_first = NA_character_,           # placeholder, keeps schema consistent
+      tob_last  = NA_character_,           # placeholder, keeps schema consistent
+      tob_rank  = 2L                       # 2 = ordinary final bill
     )
 } else {
   
@@ -109,6 +110,7 @@ if (length(bill_type_vars) == 0) {
   inpt_claims <- inpt_claims %>%
     mutate(
       bill_type_chr = str_pad(as.character(!!sym(primary_bt)), 3, pad = "0"),
+      tob_first     = substr(bill_type_chr, 1, 1),    # institutional type (1 = inpatient)
       tob_last      = substr(bill_type_chr, 3, 3),
       
       # Numeric ranking (Lower = better)
@@ -117,7 +119,10 @@ if (length(bill_type_vars) == 0) {
         tob_last %in% c("4", "1")   ~ 2,  # final-interim OR admit-thru-discharge final
         TRUE                        ~ 3   # interim (2/3), void (8), no-pay (0)
       )
-    )
+    ) %>%
+    
+    # Filter to inpatient claims only
+    filter(tob_first == "1")
 }
 
 ```
@@ -171,6 +176,7 @@ var_label(inpt_claims$from_date)                   <- "Claim FROM date (first se
 var_label(inpt_claims$thru_date)                   <- "Claim THRU date (last service on this bill)"
 
 # Type-of-Bill fields (may be NA in DE-SynPUF)
+var_label(inpt_claims$tob_first)                   <- "Type-of-Bill first digit (1 = inpatient facility, others = excluded)"
 var_label(inpt_claims$tob_last)                    <- "Bill frequency digit (1 = final, 4 = final-interim, 7 = replacement; NA in SynPUF)"
 var_label(inpt_claims$tob_rank)                    <- "Priority rank for duplicate resolution (1 = replacement, 2 = final, 3 = interim/void)"
 

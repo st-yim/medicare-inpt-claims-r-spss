@@ -67,13 +67,16 @@ The `inpatient_claims.Rmd` script performs the following steps:
    - Converts `drg_code` to factor  
 
 4. **Assign bill-type logic**  
-   - Identifies a bill-type field (`bill_type`, `clm_type_cd`, or `tob`)  
-   - Extracts final digit as `tob_last`  
+   - Identifies a bill-type field (`bill_type`, `clm_type_cd`, or `tob`)
+   - Extracts first digit as `tob_first` (used to identify inpatient claims)
+   - Extracts final digit as `tob_last` (used to infer claim status: final, interim, replacement, etc.)  
    - Assigns `tob_rank` to prioritize claims:
      - `7` → replacement (rank 1)  
      - `1` or `4` → final (rank 2)  
-     - others → interim/void/no-pay (rank 3)  
+     - others → interim/void/no-pay (rank 3)
+   - Filters to inpatient claims only: keeps rows where `tob_first == 1`  
    - If bill type is missing (e.g., DE-SynPUF), sets:
+     - `tob_first = NA`
      - `tob_last = NA`
      - `tob_rank = 2L` (assumes final-action claim)
 

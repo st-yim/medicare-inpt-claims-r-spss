@@ -68,6 +68,9 @@ inpt_claims <- inpt_claims %>%
 start_date <- ymd("2008-01-01")
 end_date   <- ymd("2010-12-31")
 
+# Count rows before filtering
+before_n = nrow(inpt_claims)
+
 # Remove claims with required dates missing or outside the valid range
 inpt_claims <- inpt_claims %>%
   filter(
@@ -94,6 +97,12 @@ inpt_claims <- inpt_claims %>%
       discharge_date
     )
   )
+
+# Count rows after filtering
+after_n = nrow(inpt_claims)
+
+# Print difference
+message(glue("Removed {before_n - after_n} rows with missing or out-of-range required dates."))
 
 ```
 

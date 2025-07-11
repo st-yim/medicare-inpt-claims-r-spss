@@ -8,12 +8,14 @@ Clean and prepare CMS DE-SynPUF inpatient claims (Sample 2, 2008–2010) in R fo
 
 ## 📦 Overview
 
-This project provides a reproducible R pipeline for processing the **CMS 2008–2010 Data Entrepreneurs’ Synthetic Public Use File (DE-SynPUF)** — specifically the **Inpatient Claims, Sample 2** dataset.
+This project provides a reproducible R pipeline for processing the **CMS 2008–2010 Data Entrepreneurs’ Synthetic Public Use File (DE-SynPUF)**, specifically the **Inpatient Claims, Sample 2** dataset.
 
 The goals are to:
 
 - Import raw synthetic Medicare inpatient claims data
 - Clean, recode, and label variables for clarity
+- Filter claims to ensure dates fall within **2008–2010**  
+- Retain **only inpatient claims** (`tob_first == 1`) 
 - Export tidy datasets as:
   - `.csv` — for easy inspection or use in SPSS
   - `.sav` — for SPSS with full variable/value labels preserved
@@ -63,7 +65,10 @@ The `inpatient_claims.Rmd` script performs the following steps:
 
 3. **Standardize names and parse dates**  
    - Renames columns to `snake_case`  
-   - Parses key date fields: `admit_date`, `thru_date`, `discharge_date`  
+    - Parses date fields: `admit_date`, `from_date`, `thru_date`, `discharge_date`  
+   - Filters out claims where:
+     - `admit_date`, `from_date`, or `thru_date` is missing or falls **outside 2008–2010**
+   - If `discharge_date` exists but is out of bounds, it is **nullified**   
    - Converts `drg_code` to factor  
 
 4. **Assign bill-type logic**  
@@ -101,8 +106,8 @@ The `inpatient_claims.Rmd` script performs the following steps:
 
 ## 💾 Outputs
 
-- `data/inpatient_claims_clean.csv` — clean, analysis-ready data  
-- `data/inpatient_claims_clean.sav` — SPSS-compatible file with labels
+- `data/inpatient_claims_clean.csv`: clean, analysis-ready data  
+- `data/inpatient_claims_clean.sav`: SPSS-compatible file with labels
 
 ---
 

@@ -223,6 +223,7 @@ inpt_claims <- inpt_claims %>%
 
 # Core stay metrics
 var_label(inpt_claims$los)                         <- "Length of stay (days)"
+var_label(inpt_claims$bill_span)                   <- "Statement length (days between FROM and THRU dates)"
 
 # Stay-level dates
 var_label(inpt_claims$admit_date)                  <- "Admission date"

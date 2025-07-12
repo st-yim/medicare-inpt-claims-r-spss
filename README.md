@@ -71,7 +71,7 @@ The `inpatient_claims.Rmd` script performs the following steps:
    - If `discharge_date` exists but is out of bounds, it is **nullified**   
    - Converts `drg_code` to factor  
 
-4. **Assign bill-type logic**  
+4a. **Assign bill-type logic**  
    - Identifies a bill-type field (`bill_type`, `clm_type_cd`, or `tob`)
    - Extracts first digit as `tob_first` (used to identify inpatient claims)
    - Extracts final digit as `tob_last` (used to infer claim status: final, interim, replacement, etc.)  
@@ -85,19 +85,23 @@ The `inpatient_claims.Rmd` script performs the following steps:
      - `tob_last = NA`
      - `tob_rank = 2L` (assumes final-action claim)
 
-5. **De-duplicate claims**  
+4b. **De-duplicate claims**  
    - For each `clm_id`, retains the highest-priority row by:
      - `tob_rank` (lowest = best)
      - Latest of `discharge_date` or `thru_date`
 
-6. **Calculate Length-of-Stay (LOS)**  
+5. **Calculate Length-of-Stay (LOS)**  
    - For claims with `tob_rank ≤ 2`, calculates:
      - `discharge_date - admit_date`, if available  
-     - Otherwise `thru_date - admit_date`  
+     - Otherwise `thru_date - admit_date`
+
+6. **Calculate billing span**  
+   - Computes the number of days between `from_date` and `thru_date`  
+   - Stored in new variable `bill_span`  
 
 7. **Label variables for SPSS compatibility**  
    - Uses `labelled::var_label()` to apply variable descriptions  
-   - Includes labels for stay dates, DRG, and bill-type variables  
+   - Includes labels for LOS, billing span, stay dates, DRG, and bill-type variables  
 
 8. **Export cleaned data**  
    - Writes both `.csv` and `.sav` files to the `data/` folder  
@@ -106,8 +110,9 @@ The `inpatient_claims.Rmd` script performs the following steps:
 
 ## 💾 Outputs
 
-- `data/inpatient_claims_clean.csv`: clean, analysis-ready data  
-- `data/inpatient_claims_clean.sav`: SPSS-compatible file with labels
+- `data/inpatient_claims_clean.csv`: clean, analysis-ready data with LOS and billing span  
+- `data/inpatient_claims_clean.sav`: SPSS-compatible file with labels, including LOS and billing span  
+
 
 ---
 

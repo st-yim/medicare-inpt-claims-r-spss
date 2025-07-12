@@ -208,7 +208,18 @@ inpt_claims <- inpt_claims %>%
 
 ```{r}
 
-# ── 6. Label key variables for SPSS / Haven export ──────────────────────────
+# ── 6. Calculate statement length (billing span) ────────────────────────────
+
+inpt_claims <- inpt_claims %>%
+  mutate(
+    bill_span = as.integer(thru_date - from_date)
+  )
+
+```
+
+```{r}
+
+# ── 7. Label key variables for SPSS / Haven export ──────────────────────────
 
 # Core stay metrics
 var_label(inpt_claims$los)                         <- "Length of stay (days)"
@@ -233,7 +244,7 @@ var_label(inpt_claims$drg_code)                    <- "Diagnosis-Related Group (
 
 ```{r}
 
-# ── 7. Save cleaned data sets ────────────────────────────────────────────────
+# ── 8. Save cleaned data sets ────────────────────────────────────────────────
 
 write_csv(inpt_claims, "data/inpatient_claims_clean.csv")
 write_sav(inpt_claims, "data/inpatient_claims_clean.sav")

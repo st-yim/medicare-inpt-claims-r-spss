@@ -221,25 +221,58 @@ inpt_claims <- inpt_claims %>%
 
 # ── 7. Label key variables for SPSS / Haven export ──────────────────────────
 
-# Core stay metrics
-var_label(inpt_claims$los)                         <- "Length of stay (days)"
-var_label(inpt_claims$bill_span)                   <- "Statement length (days between FROM and THRU dates)"
+# Beneficiary & claim identifiers
+var_label(inpt_claims$desynpuf_id)                    <- "Synthetic Beneficiary ID"
+var_label(inpt_claims$clm_id)                         <- "Claim ID"
+var_label(inpt_claims$segment)                        <- "Claim segment number (if split)"
+
+# Core stay metrics 
+var_label(inpt_claims$los)                            <- "Length of stay (days)"
+var_label(inpt_claims$bill_span)                      <- "Statement length (days between FROM and THRU dates)"
 
 # Stay-level dates
-var_label(inpt_claims$admit_date)                  <- "Admission date"
-var_label(inpt_claims$discharge_date)              <- "Discharge date"
+var_label(inpt_claims$admit_date)                     <- "Admission date"
+var_label(inpt_claims$discharge_date)                 <- "Discharge date"
 
 # Statement-covers period
-var_label(inpt_claims$from_date)                   <- "Claim FROM date (first service on this bill)"
-var_label(inpt_claims$thru_date)                   <- "Claim THRU date (last service on this bill)"
+var_label(inpt_claims$from_date)                      <- "Claim FROM date (first service on this bill)"
+var_label(inpt_claims$thru_date)                      <- "Claim THRU date (last service on this bill)"
 
 # Type-of-Bill fields (may be NA in DE-SynPUF)
-var_label(inpt_claims$tob_first)                   <- "Type-of-Bill first digit (1 = inpatient facility, others = excluded)"
-var_label(inpt_claims$tob_last)                    <- "Bill frequency digit (1 = final, 4 = final-interim, 7 = replacement; NA in SynPUF)"
-var_label(inpt_claims$tob_rank)                    <- "Priority rank for duplicate resolution (1 = replacement, 2 = final, 3 = interim/void)"
+var_label(inpt_claims$tob_first)                      <- "Type-of-Bill first digit (1 = inpatient facility, others = excluded)"
+var_label(inpt_claims$tob_last)                       <- "Bill frequency digit (1 = final, 4 = final-interim, 7 = replacement; NA in SynPUF)"
+var_label(inpt_claims$tob_rank)                       <- "Priority rank for duplicate resolution (1 = replacement, 2 = final, 3 = interim/void)"
 
-# Other claim descriptors
-var_label(inpt_claims$drg_code)                    <- "Diagnosis-Related Group (DRG)"
+# Cost & payment info
+var_label(inpt_claims$clm_pmt_amt)                    <- "Medicare payment amount"
+var_label(inpt_claims$nch_prmry_pyr_clm_pd_amt)       <- "Primary payer paid amount"
+var_label(inpt_claims$clm_pass_thru_per_diem_amt)     <- "Pass-through per diem amount"
+var_label(inpt_claims$nch_bene_ip_ddctbl_amt)         <- "Inpatient deductible amount"
+var_label(inpt_claims$nch_bene_pta_coinsrnc_lblty_am) <- "Part A coinsurance liability"
+var_label(inpt_claims$nch_bene_blood_ddctbl_lblty_am) <- "Blood deductible liability"
+
+# Provider & physician
+var_label(inpt_claims$prvdr_num)                      <- "Provider number"
+var_label(inpt_claims$at_physn_npi)                   <- "Attending physician NPI"
+var_label(inpt_claims$op_physn_npi)                   <- "Operating physician NPI"
+var_label(inpt_claims$ot_physn_npi)                   <- "Other physician NPI"
+
+# Utilization
+var_label(inpt_claims$clm_utlztn_day_cnt)             <- "Utilization day count"
+
+# DRG / diagnosis / procedures
+var_label(inpt_claims$drg_code)                       <- "Diagnosis-Related Group (DRG)"
+var_label(inpt_claims$admtng_icd9_dgns_cd)            <- "Admitting diagnosis (ICD-9)"
+
+# ICD-9 fields (diagnosis)
+for (i in 1:10) {
+  var_label(inpt_claims[[paste0("icd9_dgns_cd_", i)]]) <- glue::glue("Diagnosis code {i} (ICD-9)")
+}
+
+# ICD-9 fields (procedures)
+for (i in 1:6) {
+  var_label(inpt_claims[[paste0("icd9_prcdr_cd_", i)]]) <- glue::glue("Procedure code {i} (ICD-9)")
+}
 
 ```
 

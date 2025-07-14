@@ -39,14 +39,14 @@ This data is fully synthetic and publicly available, suitable for method develop
 
 ```text
 .
-├── data/                              # All input & output files live here
-│   ├── inpatient_claims_raw.csv                           # raw input
-│   ├── inpatient_claims_clean.csv                         # cleaned output
-│   └── inpatient_claims_clean.sav                         # SPSS output
+├── data/                                                  # All input & output files live here
+│   ├── inpatient_claims_raw.csv                           # Raw input
+│   ├── inpatient_claims_clean.csv                         # Cleaned output (CSV)
+│   └── inpatient_claims_clean.sav                         # Cleaned output for SPSS (with labels)
 │
 ├── R/
 │   └── inpatient_claims.Rmd                               # Main processing script
-├── README.Rmd                                             <- This file
+├── README.Rmd                                             # Project overview
 
 ```
 
@@ -56,22 +56,28 @@ This data is fully synthetic and publicly available, suitable for method develop
 
 The `inpatient_claims.Rmd` script performs the following steps:
 
-1. **Read and parse data**  
+### 1. **Read and parse data**  
    - Loads `inpatient_claims_raw.csv` using `readr::read_csv()`  
    - Sets `CLM_ID` and `DESYNPUF_ID` as `character` to prevent rounding or truncation  
 
-2. **Drop uninformative columns**  
+### 2. **Drop uninformative columns**  
    - Removes any constant columns (e.g. 100% NA) using `janitor::remove_constant()`  
 
-3. **Standardize names and parse dates**  
-   - Renames columns to `snake_case`  
-    - Parses date fields: `admit_date`, `from_date`, `thru_date`, `discharge_date`  
-   - Filters out claims where:
-     - `admit_date`, `from_date`, or `thru_date` is missing or falls **outside 2008–2010**
-   - If `discharge_date` exists but is out of bounds, it is **nullified**   
-   - Converts `drg_code` to factor  
+### 3a. **Standardize names and basic types**
+- Converts column names to `snake_case` using `janitor::clean_names()`  
+- Parses date columns into `Date` format:  
+  - `admit_date`, `from_date`, `thru_date`, `discharge_date`  
+- Converts `clm_drg_cd` into a factor as `drg_code`
 
-4a. **Assign bill-type logic**  
+### 3b. **Validate date ranges (2008–2010)**
+- Defines a valid service window: **2008-01-01 to 2010-12-31**  
+- Filters out any claims where:
+  - `admit_date`, `from_date`, or `thru_date` is missing or outside the range  
+- If `discharge_date` is present but out of bounds, it is replaced with `NA`  
+- Logs how many rows were removed due to invalid or missing date values
+ 
+
+### 4a. **Assign bill-type logic**  
    - Identifies a bill-type field (`bill_type`, `clm_type_cd`, or `tob`)
    - Extracts first digit as `tob_first` (used to identify inpatient claims)
    - Extracts final digit as `tob_last` (used to infer claim status: final, interim, replacement, etc.)  
@@ -85,33 +91,37 @@ The `inpatient_claims.Rmd` script performs the following steps:
      - `tob_last = NA`
      - `tob_rank = 2L` (assumes final-action claim)
 
-4b. **De-duplicate claims**  
+### 4b. **De-duplicate claims**  
    - For each `clm_id`, retains the highest-priority row by:
      - `tob_rank` (lowest = best)
      - Latest of `discharge_date` or `thru_date`
 
-5. **Calculate Length-of-Stay (LOS)**  
+### 5. **Calculate Length-of-Stay (LOS)**  
    - For claims with `tob_rank ≤ 2`, calculates:
      - `discharge_date - admit_date`, if available  
      - Otherwise `thru_date - admit_date`
 
-6. **Calculate billing span**  
+### 6. **Calculate billing span**  
    - Computes the number of days between `from_date` and `thru_date`  
    - Stored in new variable `bill_span`  
 
-7. **Label variables for SPSS compatibility**  
-   - Uses `labelled::var_label()` to apply variable descriptions  
-   - Includes labels for LOS, billing span, stay dates, DRG, and bill-type variables  
+### 7. **Add value labels for SPSS export (requires integer conversion)** 
+   - Converts `tob_first`, `tob_last`, and `tob_rank` to integers
+   - Applies SPSS-style value labels using `labelled::val_labels()`
+  
+### 8. **Label variables for SPSS compatibility**  
+   - Uses `labelled::var_label()` to apply variable descriptions
+   - Includes labels for LOS, billing span, stay dates, DRGs, bill-type variables, ICD-9 codes, etc.
 
-8. **Export cleaned data**  
+### 9. **Export cleaned data**  
    - Writes both `.csv` and `.sav` files to the `data/` folder  
 
 ---
 
 ## 💾 Outputs
 
-- `data/inpatient_claims_clean.csv`: clean, analysis-ready data with LOS and billing span  
-- `data/inpatient_claims_clean.sav`: SPSS-compatible file with labels, including LOS and billing span  
+- `data/inpatient_claims_clean.csv`: clean analysis-ready data for general use  
+- `data/inpatient_claims_clean.sav`: SPSS-compatible dataset with full labeling
 
 
 ---

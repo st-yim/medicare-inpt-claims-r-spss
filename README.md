@@ -39,14 +39,14 @@ This data is fully synthetic and publicly available, suitable for method develop
 
 ```text
 .
-├── data/                              # All input & output files live here
-│   ├── inpatient_claims_raw.csv                           # raw input
-│   ├── inpatient_claims_clean.csv                         # cleaned output
-│   └── inpatient_claims_clean.sav                         # SPSS output
+├── data/                                                  # All input & output files live here
+│   ├── inpatient_claims_raw.csv                           # Raw input
+│   ├── inpatient_claims_clean.csv                         # Cleaned output (CSV)
+│   └── inpatient_claims_clean.sav                         # Cleaned output for SPSS (with labels)
 │
 ├── R/
 │   └── inpatient_claims.Rmd                               # Main processing script
-├── README.Rmd                                             <- This file
+├── README.Rmd                                             # Project overview
 
 ```
 
@@ -99,19 +99,23 @@ The `inpatient_claims.Rmd` script performs the following steps:
    - Computes the number of days between `from_date` and `thru_date`  
    - Stored in new variable `bill_span`  
 
-7. **Label variables for SPSS compatibility**  
-   - Uses `labelled::var_label()` to apply variable descriptions  
-   - Includes labels for LOS, billing span, stay dates, DRG, and bill-type variables  
+7. **Add value labels for SPSS export (requires integer conversion)** 
+   - Converts `tob_first`, `tob_last`, and `tob_rank` to integers
+   - Applies SPSS-style value labels using `labelled::val_labels()`
+  
+8. **Label variables for SPSS compatibility**  
+   - Uses `labelled::var_label()` to apply variable descriptions
+   - Includes labels for LOS, billing span, stay dates, DRGs, bill-type variables, ICD-9 codes, etc.
 
-8. **Export cleaned data**  
+9. **Export cleaned data**  
    - Writes both `.csv` and `.sav` files to the `data/` folder  
 
 ---
 
 ## 💾 Outputs
 
-- `data/inpatient_claims_clean.csv`: clean, analysis-ready data with LOS and billing span  
-- `data/inpatient_claims_clean.sav`: SPSS-compatible file with labels, including LOS and billing span  
+- `data/inpatient_claims_clean.csv`: clean analysis-ready data for general use  
+- `data/inpatient_claims_clean.sav`: SPSS-compatible dataset with full labeling
 
 
 ---

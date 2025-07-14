@@ -295,12 +295,12 @@ var_label(inpt_claims$admtng_icd9_dgns_cd)            <- "Admitting diagnosis (I
 
 # ICD-9 fields (diagnosis)
 for (i in 1:10) {
-  var_label(inpt_claims[[paste0("icd9_dgns_cd_", i)]]) <- glue::glue("Diagnosis code {i} (ICD-9)")
+  var_label(inpt_claims[[paste0("icd9_dgns_cd_", i)]]) <- glue("Diagnosis code {i} (ICD-9)")
 }
 
 # ICD-9 fields (procedures)
 for (i in 1:6) {
-  var_label(inpt_claims[[paste0("icd9_prcdr_cd_", i)]]) <- glue::glue("Procedure code {i} (ICD-9)")
+  var_label(inpt_claims[[paste0("icd9_prcdr_cd_", i)]]) <- glue("Procedure code {i} (ICD-9)")
 }
 
 # ────────────────────────────────────────────────────────────────────────────────────────────────────────

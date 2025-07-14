@@ -221,20 +221,20 @@ inpt_claims <- inpt_claims %>%
 
 # ── 7. Add value labels for SPSS export (requires integer coding) ───────────
 
-inpt_claims_export <- inpt_claims %>%
+inpt_claims <- inpt_claims %>%
   mutate(
     tob_first = as.integer(tob_first),
     tob_last  = as.integer(tob_last),
     tob_rank  = as.integer(tob_rank)
   )
 
-val_labels(inpt_claims_export$tob_first) <- c(
+val_labels(inpt_claims$tob_first) <- c(
   "Inpatient (hospital)" = 1,
   "Outpatient"           = 2,
   "Other"                = 3
 )
 
-val_labels(inpt_claims_export$tob_last) <- c(
+val_labels(inpt_claims$tob_last) <- c(
   "Admit-thru-discharge claim (final)" = 1,
   "Interim – first claim"              = 2,
   "Interim – continuing claim"         = 3,
@@ -244,7 +244,7 @@ val_labels(inpt_claims_export$tob_last) <- c(
   "Void/cancel claim"                  = 8
 )
 
-val_labels(inpt_claims_export$tob_rank) <- c(
+val_labels(inpt_claims$tob_rank) <- c(
   "Replacement claim" = 1,
   "Final claim"       = 2,
   "Interim/Void"      = 3
@@ -318,8 +318,6 @@ var_label(inpt_claims$bill_span) <- "Statement length (days between FROM and THR
 ```{r}
 
 # ── 9. Save cleaned data sets ────────────────────────────────────────────────
-
-write_sav(inpt_claims_export, "data/inpatient_claims_clean_export.sav")
 
 write_csv(inpt_claims, "data/inpatient_claims_clean.csv")
 write_sav(inpt_claims, "data/inpatient_claims_clean.sav")

@@ -219,16 +219,12 @@ inpt_claims <- inpt_claims %>%
 
 ```{r}
 
-# ── 7. Label key variables for SPSS / Haven export ──────────────────────────
+# ── 7. Add variable labels for SPSS export ──────────────────────────────────
 
 # Beneficiary & claim identifiers
 var_label(inpt_claims$desynpuf_id)                    <- "Synthetic Beneficiary ID"
 var_label(inpt_claims$clm_id)                         <- "Claim ID"
 var_label(inpt_claims$segment)                        <- "Claim segment number (if split)"
-
-# Core stay metrics 
-var_label(inpt_claims$los)                            <- "Length of stay (days)"
-var_label(inpt_claims$bill_span)                      <- "Statement length (days between FROM and THRU dates)"
 
 # Stay-level dates
 var_label(inpt_claims$admit_date)                     <- "Admission date"
@@ -237,11 +233,6 @@ var_label(inpt_claims$discharge_date)                 <- "Discharge date"
 # Statement-covers period
 var_label(inpt_claims$from_date)                      <- "Claim FROM date (first service on this bill)"
 var_label(inpt_claims$thru_date)                      <- "Claim THRU date (last service on this bill)"
-
-# Type-of-Bill fields (may be NA in DE-SynPUF)
-var_label(inpt_claims$tob_first)                      <- "Type-of-Bill first digit (1 = inpatient facility, others = excluded)"
-var_label(inpt_claims$tob_last)                       <- "Bill frequency digit (1 = final, 4 = final-interim, 7 = replacement; NA in SynPUF)"
-var_label(inpt_claims$tob_rank)                       <- "Priority rank for duplicate resolution (1 = replacement, 2 = final, 3 = interim/void)"
 
 # Cost & payment info
 var_label(inpt_claims$clm_pmt_amt)                    <- "Medicare payment amount"
@@ -264,6 +255,9 @@ var_label(inpt_claims$clm_utlztn_day_cnt)             <- "Utilization day count"
 var_label(inpt_claims$drg_code)                       <- "Diagnosis-Related Group (DRG)"
 var_label(inpt_claims$admtng_icd9_dgns_cd)            <- "Admitting diagnosis (ICD-9)"
 
+
+# ────────────────────────────────────────────────────────────────────────────────────────────────────────
+
 # ICD-9 fields (diagnosis)
 for (i in 1:10) {
   var_label(inpt_claims[[paste0("icd9_dgns_cd_", i)]]) <- glue::glue("Diagnosis code {i} (ICD-9)")
@@ -274,11 +268,59 @@ for (i in 1:6) {
   var_label(inpt_claims[[paste0("icd9_prcdr_cd_", i)]]) <- glue::glue("Procedure code {i} (ICD-9)")
 }
 
+# ────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+# Derived / analysis variables
+var_label(inpt_claims$tob_first) <- "Type-of-Bill first digit (1 = inpatient facility)"
+var_label(inpt_claims$tob_last)  <- "Bill frequency digit (1 = final, 4 = final-interim, 7 = replacement)"
+var_label(inpt_claims$tob_rank)  <- "Priority rank (1 = replacement, 2 = final, 3 = interim/void)"
+var_label(inpt_claims$los)       <- "Length of stay (days)"
+var_label(inpt_claims$bill_span) <- "Statement length (days between FROM and THRU dates)"
+
 ```
 
 ```{r}
 
-# ── 8. Save cleaned data sets ────────────────────────────────────────────────
+# ── 8. Add value labels for SPSS export (requires integer coding) ───────────
+
+inpt_claims_export <- inpt_claims %>%
+  mutate(
+    tob_first = as.integer(tob_first),
+    tob_last  = as.integer(tob_last),
+    tob_rank  = as.integer(tob_rank)
+  )
+
+val_labels(inpt_claims_export$tob_first) <- c(
+  "Inpatient (hospital)" = 1,
+  "Outpatient"           = 2,
+  "Other"                = 3
+)
+
+val_labels(inpt_claims_export$tob_last) <- c(
+  "Admit-thru-discharge claim (final)" = 1,
+  "Interim – first claim"              = 2,
+  "Interim – continuing claim"         = 3,
+  "Interim – last claim (final)"       = 4,
+  "Late charge only"                   = 5,
+  "Replacement of prior claim"         = 7,
+  "Void/cancel claim"                  = 8
+)
+
+val_labels(inpt_claims_export$tob_rank) <- c(
+  "Replacement claim" = 1,
+  "Final claim"       = 2,
+  "Interim/Void"      = 3
+)
+
+```
+
+
+```{r}
+
+# ── 9. Save cleaned data sets ────────────────────────────────────────────────
+
+write_sav(inpt_claims_export, "data/inpatient_claims_clean_export.sav")
 
 write_csv(inpt_claims, "data/inpatient_claims_clean.csv")
 write_sav(inpt_claims, "data/inpatient_claims_clean.sav")

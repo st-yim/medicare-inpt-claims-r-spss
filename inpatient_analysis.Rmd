@@ -219,7 +219,42 @@ inpt_claims <- inpt_claims %>%
 
 ```{r}
 
-# ── 7. Add variable labels for SPSS export ──────────────────────────────────
+# ── 7. Add value labels for SPSS export (requires integer coding) ───────────
+
+inpt_claims_export <- inpt_claims %>%
+  mutate(
+    tob_first = as.integer(tob_first),
+    tob_last  = as.integer(tob_last),
+    tob_rank  = as.integer(tob_rank)
+  )
+
+val_labels(inpt_claims_export$tob_first) <- c(
+  "Inpatient (hospital)" = 1,
+  "Outpatient"           = 2,
+  "Other"                = 3
+)
+
+val_labels(inpt_claims_export$tob_last) <- c(
+  "Admit-thru-discharge claim (final)" = 1,
+  "Interim – first claim"              = 2,
+  "Interim – continuing claim"         = 3,
+  "Interim – last claim (final)"       = 4,
+  "Late charge only"                   = 5,
+  "Replacement of prior claim"         = 7,
+  "Void/cancel claim"                  = 8
+)
+
+val_labels(inpt_claims_export$tob_rank) <- c(
+  "Replacement claim" = 1,
+  "Final claim"       = 2,
+  "Interim/Void"      = 3
+)
+
+```
+
+```{r}
+
+# ── 8. Add variable labels for SPSS export ──────────────────────────────────
 
 # Beneficiary & claim identifiers
 var_label(inpt_claims$desynpuf_id)                    <- "Synthetic Beneficiary ID"
@@ -279,42 +314,6 @@ var_label(inpt_claims$los)       <- "Length of stay (days)"
 var_label(inpt_claims$bill_span) <- "Statement length (days between FROM and THRU dates)"
 
 ```
-
-```{r}
-
-# ── 8. Add value labels for SPSS export (requires integer coding) ───────────
-
-inpt_claims_export <- inpt_claims %>%
-  mutate(
-    tob_first = as.integer(tob_first),
-    tob_last  = as.integer(tob_last),
-    tob_rank  = as.integer(tob_rank)
-  )
-
-val_labels(inpt_claims_export$tob_first) <- c(
-  "Inpatient (hospital)" = 1,
-  "Outpatient"           = 2,
-  "Other"                = 3
-)
-
-val_labels(inpt_claims_export$tob_last) <- c(
-  "Admit-thru-discharge claim (final)" = 1,
-  "Interim – first claim"              = 2,
-  "Interim – continuing claim"         = 3,
-  "Interim – last claim (final)"       = 4,
-  "Late charge only"                   = 5,
-  "Replacement of prior claim"         = 7,
-  "Void/cancel claim"                  = 8
-)
-
-val_labels(inpt_claims_export$tob_rank) <- c(
-  "Replacement claim" = 1,
-  "Final claim"       = 2,
-  "Interim/Void"      = 3
-)
-
-```
-
 
 ```{r}
 
